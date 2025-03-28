@@ -1,0 +1,18 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Binary files (don't try to diff these)
+*.dmg binary
+*.zip binary
+*.exe binary
+*.app binary
+
+# Configure Git LFS for release files
+release/**/* filter=lfs diff=lfs merge=lfs -text
+
+# Mark release files as binary to avoid git trying to merge them
+release/**/* binary
+
+# Make sure GitHub language detection understands our project structure
+*.ts linguist-language=TypeScript
+*.tsx linguist-language=TypeScript 
