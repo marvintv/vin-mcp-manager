@@ -21,8 +21,8 @@ MCP Manager is an Electron-based desktop application for managing Model Context 
 
 You can download the latest pre-built application for your platform:
 
-- [macOS (DMG)](https://github.com/iagolast/mcp-manager/raw/main/release/MCP%20Manager-1.0.0.dmg)
-- [macOS (ZIP)](https://github.com/iagolast/mcp-manager/raw/main/release/MCP%20Manager-1.0.0-mac.zip)
+- [macOS (DMG)](https://github.com/timetime-software/mcp-manager/raw/main/release/MCP%20Manager-1.0.0.dmg)
+- [macOS (ZIP)](https://github.com/timetime-software/mcp-manager/raw/main/release/MCP%20Manager-1.0.0-mac.zip)
 
 ### Building from Source
 
