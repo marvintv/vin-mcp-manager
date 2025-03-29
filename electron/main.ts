@@ -245,54 +245,95 @@ async function checkMCPServerConnection(server: any): Promise<boolean> {
   return new Promise((resolve) => {
     try {
       // Extract port from environment variables or command line arguments
-      let port = 0;
+      let ports: number[] = [];
       
       // Try to find port in environment variables
       if (server.env && server.env.MCP_PORT) {
-        port = parseInt(server.env.MCP_PORT, 10);
+        ports.push(parseInt(server.env.MCP_PORT, 10));
       }
       
-      // Otherwise try to find port in command line arguments (simple check)
-      if (!port && Array.isArray(server.args)) {
+      // Also check for HTTP_PORT or API_PORT in environment variables
+      if (server.env && server.env.HTTP_PORT) {
+        ports.push(parseInt(server.env.HTTP_PORT, 10));
+      }
+      
+      if (server.env && server.env.API_PORT) {
+        ports.push(parseInt(server.env.API_PORT, 10));
+      }
+      
+      // Try to find port in command line arguments (more thorough check)
+      if (Array.isArray(server.args)) {
         for (let i = 0; i < server.args.length; i++) {
+          // Check for --port=8080 format
           if (server.args[i].includes('--port=')) {
             const portArg = server.args[i].split('=')[1];
-            port = parseInt(portArg, 10);
-            break;
+            ports.push(parseInt(portArg, 10));
           }
-          if (server.args[i] === '--port' && i < server.args.length - 1) {
-            port = parseInt(server.args[i + 1], 10);
-            break;
+          // Check for --port 8080 format
+          else if (server.args[i] === '--port' && i < server.args.length - 1) {
+            ports.push(parseInt(server.args[i + 1], 10));
+          }
+          // Check for -p 8080 format
+          else if (server.args[i] === '-p' && i < server.args.length - 1) {
+            ports.push(parseInt(server.args[i + 1], 10));
+          }
+          // Check for --http-port=8080 or --api-port=8080 format
+          else if (server.args[i].includes('--http-port=') || server.args[i].includes('--api-port=')) {
+            const portArg = server.args[i].split('=')[1];
+            ports.push(parseInt(portArg, 10));
           }
         }
       }
       
-      // If we couldn't determine a port, assume port 8080 as fallback
-      if (!port || isNaN(port)) {
-        port = 8080;
+      // Add common fallback ports if we couldn't determine any
+      if (ports.length === 0 || ports.every(p => isNaN(p))) {
+        // Common ports for MCP servers
+        ports = [8080, 3000, 5000, 8000, 8888];
       }
       
-      // Try to connect to the port
-      const socket = new net.Socket();
+      // Filter out invalid ports and remove duplicates
+      ports = [...new Set(ports.filter(p => !isNaN(p) && p > 0 && p < 65536))];
       
-      socket.setTimeout(1000); // 1 second timeout
+      console.log(`Checking server on ports: ${ports.join(', ')}`);
       
-      socket.on('connect', () => {
-        socket.destroy();
-        resolve(true);
-      });
+      // Try each port in sequence
+      let portIndex = 0;
       
-      socket.on('timeout', () => {
-        socket.destroy();
-        resolve(false);
-      });
+      const tryNextPort = () => {
+        if (portIndex >= ports.length) {
+          // We've tried all ports and none worked
+          resolve(false);
+          return;
+        }
+        
+        const port = ports[portIndex++];
+        const socket = new net.Socket();
+        
+        socket.setTimeout(3000); // 3 second timeout (more generous)
+        
+        socket.on('connect', () => {
+          console.log(`Successfully connected to port ${port}`);
+          socket.destroy();
+          resolve(true);
+        });
+        
+        socket.on('timeout', () => {
+          console.log(`Connection to port ${port} timed out`);
+          socket.destroy();
+          tryNextPort();
+        });
+        
+        socket.on('error', (err) => {
+          console.log(`Error connecting to port ${port}: ${err.message}`);
+          socket.destroy();
+          tryNextPort();
+        });
+        
+        socket.connect(port, 'localhost');
+      };
       
-      socket.on('error', () => {
-        socket.destroy();
-        resolve(false);
-      });
-      
-      socket.connect(port, 'localhost');
+      // Start trying ports
+      tryNextPort();
     } catch (error) {
       console.error('Error checking server connection:', error);
       resolve(false);

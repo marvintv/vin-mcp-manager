@@ -153,11 +153,14 @@ export async function setDefaultServer(serverId: string): Promise<{ success: boo
  */
 export async function pingMCPServer(serverId: string, server: MCPServer): Promise<ServerStatus> {
   try {
+    console.log(`Pinging MCP server ${serverId}...`);
     const response = await window.electron.ipcRenderer.invoke('ping-mcp-server', serverId, server);
     
     if (response.success) {
+      console.log(`Server ${serverId} is ONLINE`);
       return ServerStatus.ONLINE;
     } else {
+      console.log(`Server ${serverId} is OFFLINE. Reason: ${response.error || 'Connection failed'}`);
       return ServerStatus.OFFLINE;
     }
   } catch (error) {
