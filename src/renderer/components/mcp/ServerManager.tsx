@@ -12,6 +12,7 @@ const ServerManager: React.FC = () => {
   const [serverStatuses, setServerStatuses] = useState<Record<string, ServerStatus>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -31,7 +32,7 @@ const ServerManager: React.FC = () => {
       setServers(config.mcpServers || {});
       setServerIds(Object.keys(config.mcpServers || {}));
       
-      // Initialize all server statuses as unknown without checking them immediately
+      // Initialize all server statuses as unknown
       const initialStatuses: Record<string, ServerStatus> = {};
       Object.keys(config.mcpServers || {}).forEach(serverId => {
         // Preserve existing status if available, otherwise set to UNKNOWN
@@ -41,7 +42,12 @@ const ServerManager: React.FC = () => {
       
       setIsLoading(false);
       
-      // Don't automatically check server statuses on load
+      // Perform a one-time health check only if it hasn't been done yet
+      if (!initialCheckDone && Object.keys(config.mcpServers || {}).length > 0) {
+        console.log('Performing initial health check...');
+        await checkAllServerStatuses();
+        setInitialCheckDone(true);
+      }
     } catch (err: any) {
       setError(err?.message || 'Error loading MCP servers');
       setIsLoading(false);
