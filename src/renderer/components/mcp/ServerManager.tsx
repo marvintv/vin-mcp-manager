@@ -180,6 +180,12 @@ const ServerManager: React.FC = () => {
   
   // Check the status of a single server
   const checkServerStatus = async (serverId: string) => {
+    // Skip if this server is already being checked
+    if (serverStatuses[serverId] === ServerStatus.CHECKING) {
+      console.log(`Status check already in progress for ${serverId}`);
+      return;
+    }
+    
     try {
       // Mark server as checking
       setServerStatuses(prev => ({
@@ -190,17 +196,23 @@ const ServerManager: React.FC = () => {
       // Ping the server
       const status = await mcpService.pingMCPServer(serverId, servers[serverId]);
       
-      // Update the status
-      setServerStatuses(prev => ({
-        ...prev,
-        [serverId]: status,
-      }));
+      // Use a small timeout to ensure smooth animation
+      setTimeout(() => {
+        setServerStatuses(prev => ({
+          ...prev,
+          [serverId]: status,
+        }));
+      }, 300); // Small delay to allow the "checking" animation to complete
     } catch (error) {
       console.error(`Error checking server status for ${serverId}:`, error);
-      setServerStatuses(prev => ({
-        ...prev,
-        [serverId]: ServerStatus.OFFLINE,
-      }));
+      
+      // Use a small timeout to ensure smooth animation
+      setTimeout(() => {
+        setServerStatuses(prev => ({
+          ...prev,
+          [serverId]: ServerStatus.OFFLINE,
+        }));
+      }, 300);
     }
   };
   
