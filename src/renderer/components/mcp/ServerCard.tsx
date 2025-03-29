@@ -208,6 +208,7 @@ const ServerCard: React.FC<ServerCardProps> = ({
           Delete
         </button>
       </div>
+    </div>
     </>
   );
 };
