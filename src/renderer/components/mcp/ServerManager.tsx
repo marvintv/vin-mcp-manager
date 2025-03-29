@@ -3,6 +3,7 @@ import ServerCard from './ServerCard';
 import ServerDialog from './ServerDialog';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
 import ImportJsonDialog from './ImportJsonDialog';
+import ConfigJsonEditor from './ConfigJsonEditor';
 import * as mcpService from '../../services/mcpService';
 import { EditableMCPServer, MCPServer, MCPConfig, ServerStatus } from '../../types/mcp';
 
@@ -18,6 +19,7 @@ const ServerManager: React.FC = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isJsonEditorOpen, setIsJsonEditorOpen] = useState(false);
   const [currentServerId, setCurrentServerId] = useState<string | null>(null);
   
   useEffect(() => {
@@ -319,6 +321,12 @@ const ServerManager: React.FC = () => {
             Check All Statuses
           </button>
           <button 
+            onClick={() => setIsJsonEditorOpen(true)} 
+            style={{ padding: '0.5rem 1rem', borderRadius: '4px', background: 'none', border: '1px solid #ccc' }}
+          >
+            View JSON
+          </button>
+          <button 
             onClick={() => setIsImportDialogOpen(true)} 
             style={{ padding: '0.5rem 1rem', borderRadius: '4px', background: 'none', border: '1px solid #ccc' }}
           >
@@ -340,6 +348,12 @@ const ServerManager: React.FC = () => {
             MCP servers are used to manage your cluster configuration.
           </p>
           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+            <button 
+              onClick={() => setIsJsonEditorOpen(true)}
+              style={{ padding: '0.5rem 1rem', borderRadius: '4px', background: 'none', border: '1px solid #ccc' }}
+            >
+              View JSON
+            </button>
             <button 
               onClick={() => setIsImportDialogOpen(true)}
               style={{ padding: '0.5rem 1rem', borderRadius: '4px', background: 'none', border: '1px solid #ccc' }}
@@ -422,6 +436,14 @@ const ServerManager: React.FC = () => {
         isOpen={isImportDialogOpen}
         onClose={() => setIsImportDialogOpen(false)}
         onImport={handleImportFromJson}
+      />
+
+      <ConfigJsonEditor
+        isOpen={isJsonEditorOpen}
+        onClose={() => {
+          setIsJsonEditorOpen(false);
+          loadServers(); // Reload servers after closing the editor
+        }}
       />
     </div>
   );
