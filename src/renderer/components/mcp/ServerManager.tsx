@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ServerCard from './ServerCard';
 import ServerDialog from './ServerDialog';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
@@ -31,17 +31,17 @@ const ServerManager: React.FC = () => {
       setServers(config.mcpServers || {});
       setServerIds(Object.keys(config.mcpServers || {}));
       
-      // Initialize all server statuses as unknown
+      // Initialize all server statuses as unknown without checking them immediately
       const initialStatuses: Record<string, ServerStatus> = {};
       Object.keys(config.mcpServers || {}).forEach(serverId => {
-        initialStatuses[serverId] = ServerStatus.UNKNOWN;
+        // Preserve existing status if available, otherwise set to UNKNOWN
+        initialStatuses[serverId] = serverStatuses[serverId] || ServerStatus.UNKNOWN;
       });
       setServerStatuses(initialStatuses);
       
       setIsLoading(false);
       
-      // Check server statuses in the background
-      checkAllServerStatuses();
+      // Don't automatically check server statuses on load
     } catch (err: any) {
       setError(err?.message || 'Error loading MCP servers');
       setIsLoading(false);
@@ -138,7 +138,13 @@ const ServerManager: React.FC = () => {
   };
   
   // Check the status of all servers
-  const checkAllServerStatuses = async () => {
+  const checkAllServerStatuses = useCallback(async () => {
+    // Prevent multiple simultaneous status checks
+    if (Object.values(serverStatuses).some(status => status === ServerStatus.CHECKING)) {
+      console.log('Status check already in progress');
+      return;
+    }
+    
     try {
       // Mark all servers as checking
       const checkingStatuses = { ...serverStatuses };
@@ -152,8 +158,19 @@ const ServerManager: React.FC = () => {
       setServerStatuses(statuses);
     } catch (error) {
       console.error('Error checking server statuses:', error);
+      
+      // Reset statuses that are still in CHECKING state to UNKNOWN
+      setServerStatuses(prev => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach(id => {
+          if (updated[id] === ServerStatus.CHECKING) {
+            updated[id] = ServerStatus.UNKNOWN;
+          }
+        });
+        return updated;
+      });
     }
-  };
+  }, [servers, serverStatuses]);
   
   // Check the status of a single server
   const checkServerStatus = async (serverId: string) => {
