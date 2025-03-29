@@ -69,26 +69,46 @@ const ServerCard: React.FC<ServerCardProps> = ({
       borderBottom: '1px solid #eee',
       width: '100%'
     }}>
-      {/* Status Badge */}
+      {/* Status Badge and Refresh Button */}
       <div style={{ 
         marginRight: '0.75rem',
         display: 'flex',
         alignItems: 'center',
+        gap: '0.5rem'
       }}>
         <div
-          onClick={onCheckStatus}
           style={{
             ...getStatusBadgeStyle(),
             fontSize: '0.75rem',
             padding: '0.25rem 0.5rem',
             borderRadius: '9999px',
             fontWeight: 'bold',
-            cursor: 'pointer',
           }}
-          title="Click to check status"
         >
           {getStatusText()}
         </div>
+        
+        {/* Refresh Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onCheckStatus();
+          }}
+          style={{
+            background: 'none',
+            border: '1px solid #ccc',
+            borderRadius: '3px',
+            padding: '0.15rem 0.3rem',
+            cursor: 'pointer',
+            fontSize: '0.7rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          title="Refresh status"
+        >
+          ↻
+        </button>
       </div>
       
       {/* ID Column */}
