@@ -1,6 +1,14 @@
 import React from 'react';
 import { MCPServer, ServerStatus } from '../../types/mcp';
 
+const pulseAnimation = `
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+  }
+`;
+
 interface ServerCardProps {
   server: MCPServer;
   serverId: string;
@@ -38,6 +46,7 @@ const ServerCard: React.FC<ServerCardProps> = ({
         return {
           backgroundColor: '#f59e0b', // Amber
           color: 'white',
+          animation: 'pulse 1.2s infinite ease-in-out',
         };
       default:
         return {
@@ -62,13 +71,15 @@ const ServerCard: React.FC<ServerCardProps> = ({
   };
 
   return (
-    <div style={{ 
-      display: 'flex',
-      alignItems: 'center',
-      padding: '0.75rem 1rem',
-      borderBottom: '1px solid #eee',
-      width: '100%'
-    }}>
+    <>
+      <style>{pulseAnimation}</style>
+      <div style={{ 
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0.75rem 1rem',
+        borderBottom: '1px solid #eee',
+        width: '100%'
+      }}>
       {/* Status Badge and Refresh Button */}
       <div style={{ 
         marginRight: '0.75rem',
@@ -197,7 +208,7 @@ const ServerCard: React.FC<ServerCardProps> = ({
           Delete
         </button>
       </div>
-    </div>
+    </>
   );
 };
 

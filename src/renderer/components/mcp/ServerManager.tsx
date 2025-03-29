@@ -151,6 +151,9 @@ const ServerManager: React.FC = () => {
       return;
     }
     
+    const startTime = Date.now();
+    const minAnimationTime = 800; // ms
+    
     try {
       // Mark all servers as checking
       const checkingStatuses = { ...serverStatuses };
@@ -161,20 +164,54 @@ const ServerManager: React.FC = () => {
       
       // Ping all servers
       const statuses = await mcpService.pingAllMCPServers();
-      setServerStatuses(statuses);
+      
+      // Ensure minimum animation time
+      const updateStatuses = () => {
+        const elapsedTime = Date.now() - startTime;
+        if (elapsedTime < minAnimationTime) {
+          setTimeout(() => {
+            setServerStatuses(statuses);
+          }, minAnimationTime - elapsedTime);
+        } else {
+          setServerStatuses(statuses);
+        }
+      };
+      
+      updateStatuses();
     } catch (error) {
       console.error('Error checking server statuses:', error);
       
-      // Reset statuses that are still in CHECKING state to UNKNOWN
-      setServerStatuses(prev => {
-        const updated = { ...prev };
-        Object.keys(updated).forEach(id => {
-          if (updated[id] === ServerStatus.CHECKING) {
-            updated[id] = ServerStatus.UNKNOWN;
-          }
-        });
-        return updated;
-      });
+      // Ensure minimum animation time
+      const updateStatuses = () => {
+        const elapsedTime = Date.now() - startTime;
+        if (elapsedTime < minAnimationTime) {
+          setTimeout(() => {
+            // Reset statuses that are still in CHECKING state to UNKNOWN
+            setServerStatuses(prev => {
+              const updated = { ...prev };
+              Object.keys(updated).forEach(id => {
+                if (updated[id] === ServerStatus.CHECKING) {
+                  updated[id] = ServerStatus.UNKNOWN;
+                }
+              });
+              return updated;
+            });
+          }, minAnimationTime - elapsedTime);
+        } else {
+          // Reset statuses that are still in CHECKING state to UNKNOWN
+          setServerStatuses(prev => {
+            const updated = { ...prev };
+            Object.keys(updated).forEach(id => {
+              if (updated[id] === ServerStatus.CHECKING) {
+                updated[id] = ServerStatus.UNKNOWN;
+              }
+            });
+            return updated;
+          });
+        }
+      };
+      
+      updateStatuses();
     }
   }, [servers, serverStatuses]);
   
@@ -197,22 +234,55 @@ const ServerManager: React.FC = () => {
       const status = await mcpService.pingMCPServer(serverId, servers[serverId]);
       
       // Use a small timeout to ensure smooth animation
-      setTimeout(() => {
-        setServerStatuses(prev => ({
-          ...prev,
-          [serverId]: status,
-        }));
-      }, 300); // Small delay to allow the "checking" animation to complete
+      // Minimum of 800ms to ensure the checking animation is visible
+      const startTime = Date.now();
+      const minAnimationTime = 800; // ms
+      
+      const updateStatus = () => {
+        const elapsedTime = Date.now() - startTime;
+        if (elapsedTime < minAnimationTime) {
+          // Wait until minimum animation time has passed
+          setTimeout(() => {
+            setServerStatuses(prev => ({
+              ...prev,
+              [serverId]: status,
+            }));
+          }, minAnimationTime - elapsedTime);
+        } else {
+          // Update immediately if minimum time has already passed
+          setServerStatuses(prev => ({
+            ...prev,
+            [serverId]: status,
+          }));
+        }
+      };
+      
+      updateStatus();
     } catch (error) {
       console.error(`Error checking server status for ${serverId}:`, error);
       
       // Use a small timeout to ensure smooth animation
-      setTimeout(() => {
-        setServerStatuses(prev => ({
-          ...prev,
-          [serverId]: ServerStatus.OFFLINE,
-        }));
-      }, 300);
+      const startTime = Date.now();
+      const minAnimationTime = 800; // ms
+      
+      const updateStatus = () => {
+        const elapsedTime = Date.now() - startTime;
+        if (elapsedTime < minAnimationTime) {
+          setTimeout(() => {
+            setServerStatuses(prev => ({
+              ...prev,
+              [serverId]: ServerStatus.OFFLINE,
+            }));
+          }, minAnimationTime - elapsedTime);
+        } else {
+          setServerStatuses(prev => ({
+            ...prev,
+            [serverId]: ServerStatus.OFFLINE,
+          }));
+        }
+      };
+      
+      updateStatus();
     }
   };
   
