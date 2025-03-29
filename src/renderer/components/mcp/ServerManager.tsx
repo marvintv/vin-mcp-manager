@@ -284,7 +284,7 @@ const ServerManager: React.FC = () => {
             fontWeight: 'bold',
             fontSize: '0.875rem'
           }}>
-            <div style={{ width: '80px', marginRight: '0.75rem' }}>Status</div>
+            <div style={{ width: '120px', marginRight: '0.75rem' }}>Status</div>
             <div style={{ width: '15%', paddingRight: '1rem' }}>Server ID</div>
             <div style={{ width: '30%', paddingRight: '1rem' }}>Command</div>
             <div style={{ width: '15%', paddingRight: '1rem' }}>Arguments</div>
