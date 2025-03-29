@@ -204,8 +204,14 @@ app.whenReady().then(() => {
       }
 
       // Try to connect to the server using the Model Context Protocol
-      const pingSuccess = await checkMCPServerConnection(server);
-      return { success: pingSuccess };
+      const connectionResult = await checkMCPServerConnection(server);
+      console.log(`Connection result for ${serverId}:`, connectionResult);
+      
+      return { 
+        success: connectionResult.connected,
+        port: connectionResult.port,
+        error: connectionResult.error
+      };
     } catch (error) {
       console.error(`Error pinging MCP server ${serverId}:`, error);
       return { success: false, error: error.message };
@@ -238,7 +244,7 @@ async function checkCommandAvailability(command: string): Promise<boolean> {
 }
 
 // Check if an MCP server is responding
-async function checkMCPServerConnection(server: any): Promise<boolean> {
+async function checkMCPServerConnection(server: any): Promise<{ connected: boolean; port?: number; error?: string }> {
   // For MCP servers, we'll try to make a simple MCP connection
   // This is a simplified implementation - in a real-world scenario,
   // you would need to follow the MCP protocol more precisely
@@ -259,6 +265,14 @@ async function checkMCPServerConnection(server: any): Promise<boolean> {
       
       if (server.env && server.env.API_PORT) {
         ports.push(parseInt(server.env.API_PORT, 10));
+      }
+      
+      // Check for more environment variables that might contain port information
+      const portEnvVars = ['PORT', 'SERVER_PORT', 'APP_PORT', 'WEB_PORT', 'SERVICE_PORT'];
+      for (const envVar of portEnvVars) {
+        if (server.env && server.env[envVar]) {
+          ports.push(parseInt(server.env[envVar], 10));
+        }
       }
       
       // Try to find port in command line arguments (more thorough check)
@@ -282,13 +296,18 @@ async function checkMCPServerConnection(server: any): Promise<boolean> {
             const portArg = server.args[i].split('=')[1];
             ports.push(parseInt(portArg, 10));
           }
+          // Check for any argument that might contain a port number
+          else if (/--\w+-port=\d+/.test(server.args[i])) {
+            const portArg = server.args[i].split('=')[1];
+            ports.push(parseInt(portArg, 10));
+          }
         }
       }
       
       // Add common fallback ports if we couldn't determine any
       if (ports.length === 0 || ports.every(p => isNaN(p))) {
         // Common ports for MCP servers
-        ports = [8080, 3000, 5000, 8000, 8888];
+        ports = [8080, 3000, 5000, 8000, 8888, 9000, 4000];
       }
       
       // Filter out invalid ports and remove duplicates
@@ -298,11 +317,15 @@ async function checkMCPServerConnection(server: any): Promise<boolean> {
       
       // Try each port in sequence
       let portIndex = 0;
+      let lastError = '';
       
       const tryNextPort = () => {
         if (portIndex >= ports.length) {
           // We've tried all ports and none worked
-          resolve(false);
+          resolve({ 
+            connected: false, 
+            error: lastError || 'Failed to connect to any port' 
+          });
           return;
         }
         
@@ -314,17 +337,19 @@ async function checkMCPServerConnection(server: any): Promise<boolean> {
         socket.on('connect', () => {
           console.log(`Successfully connected to port ${port}`);
           socket.destroy();
-          resolve(true);
+          resolve({ connected: true, port });
         });
         
         socket.on('timeout', () => {
           console.log(`Connection to port ${port} timed out`);
+          lastError = `Connection to port ${port} timed out`;
           socket.destroy();
           tryNextPort();
         });
         
         socket.on('error', (err) => {
           console.log(`Error connecting to port ${port}: ${err.message}`);
+          lastError = err.message;
           socket.destroy();
           tryNextPort();
         });
@@ -336,7 +361,7 @@ async function checkMCPServerConnection(server: any): Promise<boolean> {
       tryNextPort();
     } catch (error) {
       console.error('Error checking server connection:', error);
-      resolve(false);
+      resolve({ connected: false, error: error.message });
     }
   });
 }
