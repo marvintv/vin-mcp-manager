@@ -311,7 +311,7 @@ async function checkMCPServerConnection(server: any): Promise<{ connected: boole
       }
       
       // Filter out invalid ports and remove duplicates
-      ports = [...new Set(ports.filter(p => !isNaN(p) && p > 0 && p < 65536))];
+      ports = Array.from(new Set(ports.filter(p => !isNaN(p) && p > 0 && p < 65536)));
       
       console.log(`Checking server on ports: ${ports.join(', ')}`);
       
